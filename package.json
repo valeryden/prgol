@@ -1,0 +1,21 @@
+{
+  "name": "vulnerable-app",
+  "version": "1.0.0",
+  "description": "Intentionally vulnerable Node.js app for testing purposes",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "3.18.1",           // Prototype pollution, CVE-2014-6394
+    "lodash": "4.17.11",           // Prototype pollution, CVE-2019-10744
+    "mongoose": "4.13.19",         // Denial of Service, CVE-2019-17426
+    "handlebars": "4.0.11",        // Remote Code Execution, CVE-2019-19919
+    "jquery": "1.8.3",             // XSS and prototype pollution
+    "socket.io": "2.1.1",          // Prototype pollution
+    "marked": "0.3.6",             // XSS, CVE-2017-17461
+    "debug": "2.6.8",              // Arbitrary code execution, CVE-2017-16137
+    "http-server": "0.9.0",        // Directory traversal, CVE-2018-14729
+    "serialize-javascript": "1.5.0" // XSS, CVE-2019-16769
+  }
+}
