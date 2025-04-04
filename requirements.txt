@@ -1,0 +1,10 @@
+Flask==0.12       # CVE-2018-1000656 - Debug mode RCE
+Django==1.2.1     # Multiple CVEs including SQL injection and XSS
+requests==2.19.1  # CVE-2018-18074 - HTTP redirect vulnerability
+PyYAML==3.13      # CVE-2017-18342 - Arbitrary code execution via unsafe loading
+Jinja2==2.7.2     # CVE-2014-1402 - Template injection
+urllib3==1.24.1   # CVE-2019-11324 - CRLF injection
+Pillow==6.2.0     # CVE-2020-11538 - Heap-based buffer overflow
+paramiko==2.0.0   # CVE-2018-1000805 - Insecure temporary file handling
+MarkupSafe==1.0   # CVE-2019-1010083 - Potential RCE vector
+sqlalchemy==1.2.18 # CVE-2019-7548 - SQL injection
