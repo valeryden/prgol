@@ -1,0 +1,8 @@
+# Django with known vulnerabilities
+Django==1.8.0
+
+# PyYAML with known vulnerabilities
+PyYAML==3.12
+
+# Urllib3 with known vulnerabilities
+urllib3==1.25.8
