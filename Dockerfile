@@ -1,36 +1,72 @@
-# Stage 1: Build stage
-FROM python:3.12-slim AS builder
+# Builder stage
+FROM python:3.10.13-bookworm as builder
+RUN arch
 
+# Set environment variables for Poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install Poetry
+RUN pip install poetry==2.0.1
+
+# Set working directory
 WORKDIR /app
 
-# Create a virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy poetry toml
+COPY pyproject.toml ./
 
-# Copy and install requirements (if you had any)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install project dependencies (excluding dev dependencies) using Poetry
+RUN poetry install --no-root
+RUN poetry show streamlit
+RUN poetry run streamlit --version
 
-# Copy the application code
-COPY app.py .
+# Runtime stage
+FROM python:3.10-slim-bookworm as runtime
 
-# Stage 2: Production stage
-FROM python:3.12-slim
+# Set environment variables for virtual environment
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
 
+# Copy virtual environment from builder stage
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+# Set working directory
 WORKDIR /app
 
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy the python script to the container
+COPY . /app
 
-# Copy application from builder
-COPY --from=builder /app/app.py .
+# Install curl and other dependencies
+RUN apt-get update && apt-get install -y curl python3-dev
 
-# Set Python to run in unbuffered mode
-ENV PYTHONUNBUFFERED=1
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs
 
-# Expose port for the application
-EXPOSE 8000
+# Set working directory to frontend and install node packages
+WORKDIR /app/frontend
 
-# Run the application
-CMD ["python", "app.py"]
+# Ensure the correct ownership of the node_modules directory to avoid permission issues
+RUN mkdir -p /app/frontend/node_modules && chown -R root:root /app/frontend/node_modules
+
+# Remove existing node_modules and install npm packages, ensuring a clean state
+RUN rm -rf node_modules
+COPY frontend/package*.json ./
+RUN npm ci && npm install rollup rollup-pluginutils rollup-plugin-svelte
+
+# Run the build process
+RUN npm run build
+
+# Change back to the app directory
+WORKDIR /app
+
+# Expose port
+EXPOSE 8080
+
+# Run App using Python explicitly
+CMD ["/app/.venv/bin/streamlit", "run", "src/1.py", "--server.port=8080", "--server.enableCORS=false", "--server.address=0.0.0.0"]
