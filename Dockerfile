@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.10.13-bookworm as builder
+FROM python:3.10-bookworm as builder
 RUN arch
 
 # Set environment variables for Poetry
