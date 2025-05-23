@@ -64,7 +64,7 @@ RUN npm run build
 
 # Change back to the app directory
 WORKDIR /app
-
+USER heimhere
 # Expose port
 EXPOSE 8080
 
