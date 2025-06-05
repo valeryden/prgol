@@ -16,7 +16,7 @@ RUN pip install poetry==2.0.1
 
 # Set working directory
 WORKDIR /app
-
+USER someone
 # Copy poetry toml
 COPY pyproject.toml ./
 
