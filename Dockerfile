@@ -46,4 +46,4 @@ RUN npm init -y && \
 
 # 5) JSON‐form CMD must be one valid instruction, not split
 EXPOSE 8080
-CMD ["sh","-c","echo 'Starting vulnerable Log4j app…' && java -cp /vuln/log4j/log4j-core-2.14.1.jar:/app/java Hello & echo 'Starting vulnerable Node.js app…' && node /app/node/index.js"]
+CMD ["tail", "-f", "/dev/null"]
