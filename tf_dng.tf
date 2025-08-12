@@ -66,7 +66,7 @@ resource "aws_db_instance" "public_db" {
   username             = "admin"
   password             = "password123"
   parameter_group_name = "default.mysql5.7"
-  publicly_accessible  = true
+  publicly_accessible  = false
   skip_final_snapshot  = true
   storage_encrypted    = false
 }
@@ -107,7 +107,7 @@ resource "aws_cloudtrail" "insecure_trail" {
   s3_bucket_name                = aws_s3_bucket.public_bucket.id
   include_global_service_events = false
   enable_logging                = true
-  enable_log_file_validation    = false
+  enable_log_file_validation    = true
   kms_key_id                    = null
 }
 
