@@ -29,7 +29,7 @@ AWS_SECRET_KEY = "wJalrXUtnFExxxxxxxxxxxYEXAMPLEKEY"
 AZURE_CONNECTION_STRING = "DefaultExxxxxxxxxxxame=test;AccountKey=abc123=="
 DATABASE_URL = "postgresql://adxxxxxxx23@localhost:5432/testdb"
 JWT_SECRET = "super_xxxxxxx_12345"  # Weak JWT secret
-API_TOKEN = "hf_livxxxxxxen_abcdef123456789"  # HelloFresh-like API token
+API_TOKEN = "hf_livxxxxxxen_abcdef123456789"  # 
 MONGODB_URI = "mongodb://admin:sexxxxxxmongodb.example.com:27017/production"
 
 # More hardcoded secrets for comprehensive testing
