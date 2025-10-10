@@ -3,6 +3,6 @@ terraform {
     resource_group_name  = "rg-bootstrap-6861"
     storage_account_name = "sabootstrap6861"
     container_name       = "tfstate"
-    key                  = "terraform.tfstate"
+    key                  = "main.tfstate"
   }
 }
