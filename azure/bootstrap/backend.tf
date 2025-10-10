@@ -1,5 +1,8 @@
-
 terraform {
   backend "azurerm" {
+    resource_group_name  = "rg-bootstrap-6861"
+    storage_account_name = "sabootstrap6861"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
   }
 }
