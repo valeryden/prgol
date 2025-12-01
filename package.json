@@ -1,0 +1,11 @@
+{
+  "name": "wiz-malware-critical-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Manifest used only to test Wiz security tooling with known malicious npm packages",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "ua-parser-js": "0.7.29",
+    "@ctrl/tinycolor": "4.1.1"
+  }
+}
