@@ -1,0 +1,9 @@
+{
+  "name": "ua-parser-malware-detection-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Test project to verify detection of malicious ua-parser-js versions.",
+  "dependencies": {
+    "ua-parser-js": "0.7.29"
+  }
+}
