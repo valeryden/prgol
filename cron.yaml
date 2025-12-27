@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "aws-ecr-credential.cronJob" . }}
+  labels:
+    {{- include "aws-ecr-credential.labels" . | nindent 4 }}
+spec:
+  schedule: "0 */8 * * *"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        metadata:
+          labels:
+            {{- include "aws-ecr-credential.podLabels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ include "aws-ecr-credential.serviceAccountName" . }}
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: "{{ .Values.jobImage }}:latest"  # <- No digest, uses latest tag
+              imagePullPolicy: Always
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "aws-ecr-credential.secret" . }}
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "aws-ecr-credential.secret" . }}
+                      key: AWS_SECRET_ACCESS_KEY
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  export AWS_ACCOUNT={{ .Values.aws.account }}
+                  export AWS_REGION={{ .Values.aws.region }}
+                  echo "Authenticating to AWS ECR..."
+                  aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
+          
